@@ -1,0 +1,83 @@
+!pip install requests beautifulsoup4 pandas
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+url = 'https://results.eci.gov.in/pc/en/XXXXXX'  # Replace 'XXXXXX' with the actual path
+
+try:
+    # Send a request to fetch the webpage content
+    response = requests.get(url)
+    response.raise_for_status()  # Check if the request was successful
+
+    # Parse the content with BeautifulSoup
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Example: Extract party-wise results
+    party_results = []
+    for row in soup.find_all('tr')[1:]:  # Skip the header row
+        columns = row.find_all('td')
+        if columns and len(columns) >= 2:
+            party_results.append({
+                'Party': columns[0].text.strip(),
+                'Seats_Won': columns[1].text.strip()
+            })
+
+    # Convert to a DataFrame
+    df_results = pd.DataFrame(party_results)
+    print(df_results)
+
+    # Save to a CSV file
+    df_results.to_csv('election_results.csv', index=False)
+
+except requests.exceptions.HTTPError as err:
+    print(f"HTTP error occurred: {err}")  # Handle HTTP errors
+except Exception as err:
+    print(f"An error occurred: {err}")  # Handle other errors
+
+
+import os
+print(os.listdir())
+
+
+# Example DataFrame creation for insights
+data_insights = {
+    'Insight Number': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    'Insight Description': [
+        'Example insight 1',
+        'Example insight 2',
+        'Example insight 3',
+        'Example insight 4',
+        'Example insight 5',
+        'Example insight 6',
+        'Example insight 7',
+        'Example insight 8',
+        'Example insight 9',
+        'Example insight 10'
+    ]
+}
+
+df_insights = pd.DataFrame(data_insights)
+
+# Export DataFrame to CSV
+csv_filename_insights = 'election_insights.csv'
+df_insights.to_csv(csv_filename_insights, index=False)
+
+print(f'CSV file "{csv_filename_insights}" has been created.')
+
+
+import os
+
+# List files in the current directory
+print(os.listdir())
+
+# Load the election results CSV file
+df_results = pd.read_csv('election_results.csv')
+
+# Example analysis: Total seats won by each party
+total_seats = df_results.groupby('Party')['Seats_Won'].sum()
+print(total_seats)
+
+# Save the analysis results to a new CSV file
+total_seats.to_csv('total_seats_by_party.csv')
